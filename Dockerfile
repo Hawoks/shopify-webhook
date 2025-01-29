@@ -29,9 +29,9 @@ WORKDIR /app
 # Открываем порты (HTTPS, HTTP, LMS, CMS)
 EXPOSE 80 443 8000 18000 3030 3306 9200 27017
 
-# Добавляем автоконфигурацию Open edX при запуске контейнера
+# Копируем скрипт настройки Tutor
 COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
-# Запуск Docker Daemon и Tutor Open edX
-CMD ["sh", "-c", "dockerd & /entrypoint.sh"]
+# Запускаем Tutor при создании контейнера
+CMD ["sh", "-c", "/entrypoint.sh"]
