@@ -18,15 +18,8 @@ jobs:
 
       - name: 🚀 Запуск контейнера для настройки Open edX
         run: |
-          docker run -d --name tutor-setup --privileged tutor-setup
+          docker run -d --name tutor-setup tutor-setup
           sleep 5
-
-      - name: 🐳 Запуск Docker внутри контейнера (чтобы работал Tutor)
-        run: |
-          docker exec tutor-setup sh -c "[ -e /var/run/docker.pid ] && rm /var/run/docker.pid"
-          docker exec tutor-setup sh -c "nohup dockerd > /dev/null 2>&1 &"
-          sleep 10
-          docker exec tutor-setup docker ps  # Проверяем, что Docker работает
 
       - name: 🌍 Настраиваем Tutor Open edX (без интерактивного режима)
         run: |
@@ -37,7 +30,7 @@ jobs:
                                                      --set DEFAULT_LANGUAGE="en" \
                                                      --set ENABLE_HTTPS=true
 
-      - name: 🚀 Запускаем Open edX
+      - name: 🚀 Запускаем Open edX (без запуска `dockerd` в контейнере)
         run: |
           docker exec tutor-setup tutor local start
 
@@ -47,11 +40,11 @@ jobs:
 
       - name: 📦 Создаем финальный образ с полностью настроенным Open edX
         run: |
-          docker commit tutor-setup mistervkln/tutor-openedx:latest-v8
+          docker commit tutor-setup mistervkln/tutor-openedx:latest-v4
 
       - name: 🔑 Логин в Docker Hub
         run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
 
       - name: 🚢 Публикация готового образа в Docker Hub
         run: |
-          docker push mistervkln/tutor-openedx:latest-v8
+          docker push mistervkln/tutor-openedx:latest-v4
