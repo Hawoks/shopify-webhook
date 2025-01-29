@@ -1,24 +1,54 @@
-name: Build and Push Docker Image
+name: Build, Configure, and Push Tutor Open edX Image
 
 on:
   push:
     branches:
-      - master  # Запускать при пуше в master
+      - master  
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout репозиторий
+      - name: 📥 Клонируем репозиторий
         uses: actions/checkout@v3
 
-      - name: Логин в Docker Hub
+      - name: 🛠️ Сборка Docker-образа с зависимостями (без запуска Open edX)
+        run: |
+          docker build -t tutor-setup .
+
+      - name: 🚀 Запуск контейнера для настройки Open edX
+        run: |
+          docker run -d --name tutor-setup --privileged tutor-setup
+          sleep 5
+
+      - name: 🐳 Запуск Docker внутри контейнера (чтобы работал Tutor)
+        run: |
+          docker exec tutor-setup dockerd &
+          sleep 10
+
+      - name: 🌍 Настраиваем Tutor Open edX
+        run: |
+          docker exec tutor-setup tutor local launch <<EOF
+          y
+          uni-books.online
+          studio.uni-books.online
+          Uni-Books Online
+          contact@uni-books.online
+          en
+          y
+          EOF
+
+      - name: 🛑 Останавливаем Open edX перед созданием образа
+        run: |
+          docker exec tutor-setup tutor local stop
+
+      - name: 📦 Создаем финальный образ с полностью настроенным Open edX
+        run: |
+          docker commit tutor-setup mistervkln/tutor-openedx:latest-v5
+
+      - name: 🔑 Логин в Docker Hub
         run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
 
-      - name: Сборка Docker-образа
+      - name: 🚢 Публикация готового образа в Docker Hub
         run: |
-          docker build -t mistervkln/tutor-openedx:latest-v3 .
-
-      - name: Публикация образа в Docker Hub
-        run: |
-          docker push mistervkln/tutor-openedx:latest-v3
+          docker push mistervkln/tutor-openedx:latest-v5
