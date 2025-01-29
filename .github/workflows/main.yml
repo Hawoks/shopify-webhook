@@ -3,7 +3,7 @@ name: Build, Configure, and Push Tutor Open edX Image
 on:
   push:
     branches:
-      - master  
+      - master  # Запуск при пуше в master
 
 jobs:
   build:
@@ -26,17 +26,18 @@ jobs:
           docker exec tutor-setup dockerd &
           sleep 10
 
-      - name: 🌍 Настраиваем Tutor Open edX
+      - name: 🌍 Настраиваем Tutor Open edX (без интерактивного режима)
         run: |
-          docker exec tutor-setup tutor local launch <<EOF
-          y
-          uni-books.online
-          studio.uni-books.online
-          Uni-Books Online
-          contact@uni-books.online
-          en
-          y
-          EOF
+          docker exec tutor-setup tutor config save --set LMS_HOST=uni-books.online \
+                                                     --set CMS_HOST=studio.uni-books.online \
+                                                     --set PLATFORM_NAME="Uni-Books Online" \
+                                                     --set CONTACT_EMAIL="contact@uni-books.online" \
+                                                     --set DEFAULT_LANGUAGE="en" \
+                                                     --set ENABLE_HTTPS=true
+
+      - name: 🚀 Запускаем Open edX
+        run: |
+          docker exec tutor-setup tutor local start
 
       - name: 🛑 Останавливаем Open edX перед созданием образа
         run: |
@@ -44,11 +45,11 @@ jobs:
 
       - name: 📦 Создаем финальный образ с полностью настроенным Open edX
         run: |
-          docker commit tutor-setup mistervkln/tutor-openedx:latest-v4
+          docker commit tutor-setup mistervkln/tutor-openedx:latest-v6
 
       - name: 🔑 Логин в Docker Hub
         run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
 
       - name: 🚢 Публикация готового образа в Docker Hub
         run: |
-          docker push mistervkln/tutor-openedx:latest-v4
+          docker push mistervkln/tutor-openedx:latest-v6
