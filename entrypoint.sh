@@ -1,27 +1,31 @@
 #!/bin/sh
 
-# Запускаем Docker Daemon
+echo "🚀 Запуск Docker Daemon..."
 dockerd &
 
-# Ожидаем, пока Docker полностью запустится
-sleep 5
+echo "⏳ Ожидаем, пока Docker запустится..."
+sleep 10
 
-# Настраиваем Tutor Open edX для домена uni-books.online
-tutor config save --set LMS_HOST=uni-books.online --set CMS_HOST=studio.uni-books.online
+echo "🔧 Настраиваем Tutor Open edX..."
+tutor config save --set LMS_HOST=uni-books.online \
+                  --set CMS_HOST=studio.uni-books.online \
+                  --set PLATFORM_NAME="Uni-Books Online" \
+                  --set CONTACT_EMAIL="contact@uni-books.online" \
+                  --set DEFAULT_LANGUAGE="en" \
+                  --set ENABLE_HTTPS=true
 
-# Включаем SSL (Let's Encrypt)
-tutor config save --set ENABLE_HTTPS=true
+echo "🌍 Запускаем Tutor Open edX..."
+tutor local launch <<EOF
+y
+uni-books.online
+studio.uni-books.online
+Uni-Books Online
+contact@uni-books.online
+en
+y
+EOF
 
-# Проверяем и настраиваем сертификаты SSL
-if [ ! -f "/root/.local/share/tutor/env/local/certs/live/uni-books.online/fullchain.pem" ]; then
-  echo "🔐 Запускаем Let's Encrypt для uni-books.online..."
-  tutor local stop
-  tutor local restart
-  certbot certonly --standalone --preferred-challenges http --agree-tos -m contact@uni-books.online -d uni-books.online -d studio.uni-books.online
-fi
+echo "🛑 Останавливаем Tutor перед загрузкой образа..."
+tutor local stop
 
-# Запуск Open edX
-tutor local start
-
-# Оставляем контейнер запущенным
-tail -f /dev/null
+echo "✅ Tutor полностью настроен! Готово к загрузке в Docker Hub."
