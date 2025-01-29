@@ -17,8 +17,8 @@ jobs:
 
       - name: Сборка Docker-образа
         run: |
-          docker build -t mistervkln/tutor-openedx:latest-v1 .
+          docker build -t mistervkln/tutor-openedx:latest-v2 .
 
       - name: Публикация образа в Docker Hub
         run: |
-          docker push mistervkln/tutor-openedx:latest-v1
+          docker push mistervkln/tutor-openedx:latest-v2
