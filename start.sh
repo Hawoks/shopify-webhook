@@ -1,9 +1,10 @@
 #!/bin/sh
 
 echo "🚀 Запуск Docker Daemon..."
-dockerd &
-
-echo "⏳ Ожидание 10 секунд, пока Docker полностью запустится..."
+if [ -e /var/run/docker.pid ]; then
+    rm /var/run/docker.pid
+fi
+nohup dockerd > /dev/null 2>&1 &
 sleep 10
 
 echo "🎓 Запуск Open edX..."
