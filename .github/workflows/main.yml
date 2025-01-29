@@ -8,6 +8,10 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    services:
+      docker:
+        image: docker:dind  # Запускаем Docker-in-Docker
+
     steps:
       - name: 📥 Клонируем репозиторий
         uses: actions/checkout@v3
@@ -16,10 +20,16 @@ jobs:
         run: |
           docker build -t tutor-setup .
 
-      - name: 🚀 Запуск контейнера для настройки Open edX
+      - name: 🚀 Запуск контейнера для настройки Open edX (с DinD)
         run: |
-          docker run -d --name tutor-setup tutor-setup
+          docker run -d --privileged --name tutor-setup docker:dind
           sleep 5
+
+      - name: 🐳 Запуск Docker внутри контейнера (чтобы работал Tutor)
+        run: |
+          docker exec tutor-setup dockerd &
+          sleep 15
+          docker exec tutor-setup docker ps  # Проверяем, что Docker работает внутри контейнера
 
       - name: 🌍 Настраиваем Tutor Open edX (без интерактивного режима)
         run: |
@@ -30,7 +40,7 @@ jobs:
                                                      --set DEFAULT_LANGUAGE="en" \
                                                      --set ENABLE_HTTPS=true
 
-      - name: 🚀 Запускаем Open edX (без запуска `dockerd` в контейнере)
+      - name: 🚀 Запускаем Open edX внутри контейнера
         run: |
           docker exec tutor-setup tutor local start
 
@@ -40,11 +50,11 @@ jobs:
 
       - name: 📦 Создаем финальный образ с полностью настроенным Open edX
         run: |
-          docker commit tutor-setup mistervkln/tutor-openedx:latest-v4
+          docker commit tutor-setup mistervkln/tutor-openedx:latest-v12
 
       - name: 🔑 Логин в Docker Hub
         run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
 
       - name: 🚢 Публикация готового образа в Docker Hub
         run: |
-          docker push mistervkln/tutor-openedx:latest-v4
+          docker push mistervkln/tutor-openedx:latest-v12
