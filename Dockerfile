@@ -1,20 +1,29 @@
-# Используем официальный образ Docker-in-Docker (DinD)
-FROM docker:latest
+# Используем базовый образ Alpine Linux с Python 3.10
+FROM python:3.10-alpine
 
-# Устанавливаем необходимые пакеты
+# Устанавливаем необходимые зависимости
 RUN apk update && apk add --no-cache \
-    python3 \
-    py3-pip \
     docker-cli \
-    && ln -sf python3 /usr/bin/python \
+    bash \
+    curl \
+    git \
+    gcc \
+    libc-dev \
+    linux-headers \
+    musl-dev \
+    libffi-dev \
+    openssl-dev \
+    cargo \
     && pip install --upgrade pip
 
-# Устанавливаем Python 3.9+
-RUN pip install --upgrade pip setuptools wheel \
-    && pip install "tutor[full]==18.2.2"
+# Устанавливаем Tutor Open edX версии 18.2.2
+RUN pip install "tutor[full]==18.2.2"
+
+# Указываем рабочую директорию
+WORKDIR /app
 
 # Открываем порты (если нужно)
-EXPOSE 2375 8000 80 443
+EXPOSE 8000 80 443
 
-# Запуск Docker Daemon в контейнере (DinD)
-CMD ["dockerd-entrypoint.sh"]
+# Указываем команду по умолчанию
+CMD ["/bin/sh"]
