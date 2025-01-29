@@ -3,7 +3,9 @@ FROM python:3.10-alpine
 
 # Устанавливаем необходимые зависимости
 RUN apk update && apk add --no-cache \
+    docker \
     docker-cli \
+    docker-compose \
     bash \
     curl \
     git \
@@ -23,7 +25,7 @@ RUN pip install "tutor[full]==18.2.2"
 WORKDIR /app
 
 # Открываем порты (если нужно)
-EXPOSE 8000 80 443
+EXPOSE 2375 8000 80 443
 
-# Указываем команду по умолчанию
-CMD ["/bin/sh"]
+# Запуск Docker Daemon и запуск шелла
+CMD ["sh", "-c", "dockerd & /bin/sh"]
