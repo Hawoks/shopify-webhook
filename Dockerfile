@@ -23,6 +23,9 @@ RUN apk update && apk add --no-cache \
 # Устанавливаем Tutor Open edX версии 18.2.2
 RUN pip install "tutor[full]==18.2.2"
 
+# Добавляем `tutor` в PATH
+ENV PATH="/root/.local/bin:$PATH"
+
 # Указываем рабочую директорию
 WORKDIR /app
 
