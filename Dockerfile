@@ -18,14 +18,14 @@ RUN apk update && apk add --no-cache \
     nginx \
     certbot
 
-# Создаем и активируем виртуальное окружение
+# Создаем виртуальное окружение и устанавливаем Tutor
 RUN python3 -m venv /venv \
     && . /venv/bin/activate \
     && pip install --upgrade pip \
     && pip install "tutor[full]==18.2.2" \
     && deactivate
 
-# Устанавливаем переменные окружения для виртуального окружения
+# Добавляем виртуальное окружение в PATH
 ENV PATH="/venv/bin:$PATH"
 
 # Указываем рабочую директорию
@@ -34,20 +34,8 @@ WORKDIR /app
 # Указываем, где хранятся данные Tutor
 ENV TUTOR_ROOT="/root/.local/share/tutor"
 
-# Настройка Open edX
-RUN tutor config save --set LMS_HOST=uni-books.online \
-                       --set CMS_HOST=studio.uni-books.online \
-                       --set PLATFORM_NAME="Uni-Books Online" \
-                       --set CONTACT_EMAIL="contact@uni-books.online" \
-                       --set DEFAULT_LANGUAGE="en" \
-                       --set ENABLE_HTTPS=true
-
-# Разворачиваем Open edX
-RUN dockerd & \
-    sleep 10 && \
-    tutor local launch && \
-    sleep 60 && \
-    tutor local stop
+# Настройка Open edX (автоматически вводим ответы)
+RUN printf "Y\nuni-books.online\nstudio.uni-books.online\nUni-Books Online\ncontact@uni-books.online\nen\nY\n" | tutor local launch
 
 # Открываем порты
 EXPOSE 80 443 8000 18000 3030 3306 9200 27017
