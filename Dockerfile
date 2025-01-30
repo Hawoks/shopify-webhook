@@ -1,9 +1,8 @@
-# Используем базовый образ Alpine Linux с Python 3.10
+# Используем базовый образ Alpine с Python
 FROM python:3.10-alpine
 
-# Устанавливаем необходимые зависимости
+# Устанавливаем зависимости
 RUN apk update && apk add --no-cache \
-    docker \
     docker-cli \
     docker-compose \
     bash \
@@ -29,12 +28,26 @@ ENV PATH="/root/.local/bin:$PATH"
 # Указываем рабочую директорию
 WORKDIR /app
 
-# Открываем порты (HTTPS, HTTP, LMS, CMS)
+# Указываем, где хранятся данные Tutor
+ENV TUTOR_ROOT="/root/.local/share/tutor"
+
+# Предварительная настройка Open edX
+RUN tutor config save --set LMS_HOST=uni-books.online \
+                       --set CMS_HOST=studio.uni-books.online \
+                       --set PLATFORM_NAME="Uni-Books Online" \
+                       --set CONTACT_EMAIL="contact@uni-books.online" \
+                       --set DEFAULT_LANGUAGE="en" \
+                       --set ENABLE_HTTPS=true
+
+# Разворачиваем Open edX во время сборки
+RUN tutor local start && tutor local stop
+
+# Открываем порты (чтобы Open edX работал при запуске)
 EXPOSE 80 443 8000 18000 3030 3306 9200 27017
 
-# Копируем скрипт автозапуска
+# Копируем скрипт старта
 COPY start.sh /start.sh
 RUN chmod +x /start.sh
 
-# Автозапуск Docker и Tutor Open edX
+# Автозапуск Tutor при старте контейнера
 CMD ["sh", "-c", "/start.sh"]
