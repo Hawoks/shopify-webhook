@@ -13,13 +13,19 @@ jobs:
       - name: 📥 Клонируем репозиторий
         uses: actions/checkout@v3
 
+      - name: 🛠️ Настройка Docker-in-Docker
+        run: |
+          docker run --privileged --name dind-container -d docker:24-dind
+          sleep 10
+
       - name: 🛠️ Сборка Docker-образа
         run: |
-          docker build -t mistervkln/tutor-openedx .
-
+          docker exec dind-container docker build -t mistervkln/tutor-openedx .
+      
       - name: 🔑 Логин в Docker Hub
-        run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+        run: |
+          docker exec dind-container sh -c "echo '${{ secrets.DOCKER_PASSWORD }}' | docker login -u '${{ secrets.DOCKER_USERNAME }}' --password-stdin"
 
       - name: 🚢 Публикация образа в Docker Hub
         run: |
-          docker push mistervkln/tutor-openedx
+          docker exec dind-container docker push mistervkln/tutor-openedx
