@@ -16,7 +16,9 @@ RUN apk update && apk add --no-cache \
     python3 \
     py3-pip \
     nginx \
-    certbot
+    certbot \
+    docker-cli \
+    docker-compose
 
 # Создаем виртуальное окружение и устанавливаем Tutor
 RUN python3 -m venv /venv \
@@ -34,8 +36,15 @@ WORKDIR /app
 # Указываем, где хранятся данные Tutor
 ENV TUTOR_ROOT="/root/.local/share/tutor"
 
-# Настройка Open edX (автоматически вводим ответы)
+# Запускаем Docker Daemon ВНУТРИ контейнера (БЕЗ ХОСТА)
+RUN dockerd --storage-driver=vfs & \
+    sleep 10
+
+# Конфигурируем Tutor (автоматически передаём ответы)
 RUN printf "Y\nuni-books.online\nstudio.uni-books.online\nUni-Books Online\ncontact@uni-books.online\nen\nY\n" | tutor local launch
+
+# Даём Tutor поработать 60 секунд и корректно останавливаем
+RUN sleep 60 && tutor local stop
 
 # Открываем порты
 EXPOSE 80 443 8000 18000 3030 3306 9200 27017
