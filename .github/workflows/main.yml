@@ -21,8 +21,7 @@ jobs:
             --name dind-container \
             -v "$(pwd):/workspace" \
             -w /workspace \
-            -d docker:24-dind \
-            --storage-driver=vfs
+            -d docker:24-dind
           sleep 10
 
       # 3. Проверяем, что файлы доступны внутри контейнера
