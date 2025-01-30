@@ -14,27 +14,33 @@ jobs:
       - name: 📥 Клонируем репозиторий
         uses: actions/checkout@v3
 
-      # 2. Запускаем Docker-in-Docker
+      # 2. Запускаем Docker-in-Docker с привилегиями
       - name: 🛠️ Настройка Docker-in-Docker
         run: |
           docker run --privileged \
             --name dind-container \
             -v "$(pwd):/workspace" \
             -w /workspace \
-            -d docker:24-dind
+            -d docker:24-dind \
+            --storage-driver=vfs
           sleep 10
 
-      # 3. Сборка Docker-образа
+      # 3. Проверяем, что файлы доступны внутри контейнера
+      - name: 🔍 Проверка содержимого контекста
+        run: |
+          docker exec dind-container ls -la /workspace
+
+      # 4. Сборка Docker-образа
       - name: 🛠️ Сборка Docker-образа
         run: |
           docker exec dind-container docker build -t mistervkln/tutor-openedx -f /workspace/Dockerfile /workspace
 
-      # 4. Логин в Docker Hub
+      # 5. Логин в Docker Hub
       - name: 🔑 Логин в Docker Hub
         run: |
           docker exec dind-container sh -c "echo '${{ secrets.DOCKER_PASSWORD }}' | docker login -u '${{ secrets.DOCKER_USERNAME }}' --password-stdin"
 
-      # 5. Публикация образа в Docker Hub
+      # 6. Публикация образа в Docker Hub
       - name: 🚢 Публикация образа в Docker Hub
         run: |
           docker exec dind-container docker push mistervkln/tutor-openedx
