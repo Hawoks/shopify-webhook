@@ -1,6 +1,3 @@
-# Используем базовый образ с Docker-in-Docker
-FROM docker:24-dind
-
 # Устанавливаем зависимости
 RUN apk update && apk add --no-cache \
     bash \
@@ -16,21 +13,23 @@ RUN apk update && apk add --no-cache \
     python3 \
     py3-pip \
     nginx \
-    certbot \
-    && python3 -m venv /venv \
-    && source /venv/bin/activate \
-    && pip install --upgrade pip
+    certbot
 
+# Создаем и активируем виртуальное окружение
+RUN python3 -m venv /venv \
+    && . /venv/bin/activate \
+    && pip install --upgrade pip \
+    && pip install "tutor[full]==18.2.2" \
+    && deactivate
 
-# Устанавливаем Tutor Open edX версии 18.2.2
-RUN pip install "tutor[full]==18.2.2"
+# Устанавливаем переменные окружения для виртуального окружения
+ENV PATH="/venv/bin:$PATH"
 
 # Указываем рабочую директорию
 WORKDIR /app
 
 # Указываем, где хранятся данные Tutor
 ENV TUTOR_ROOT="/root/.local/share/tutor"
-ENV PATH="/root/.local/bin:$PATH"
 
 # Настройка Open edX
 RUN tutor config save --set LMS_HOST=uni-books.online \
