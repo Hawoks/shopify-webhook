@@ -1,3 +1,6 @@
+# Используем базовый образ с Docker-in-Docker
+FROM docker:24-dind
+
 # Устанавливаем зависимости
 RUN apk update && apk add --no-cache \
     bash \
