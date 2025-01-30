@@ -17,7 +17,10 @@ RUN apk update && apk add --no-cache \
     py3-pip \
     nginx \
     certbot \
-    && pip install --upgrade pip --break-system-packages
+    && python3 -m venv /venv \
+    && source /venv/bin/activate \
+    && pip install --upgrade pip
+
 
 # Устанавливаем Tutor Open edX версии 18.2.2
 RUN pip install "tutor[full]==18.2.2"
